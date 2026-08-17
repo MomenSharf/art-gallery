@@ -8,7 +8,7 @@ export const artworks: Artwork[] = [
     date: "2026",
     category: "فن رقمي",
     image:
-      "https://res.cloudinary.com/ggaa6hcy/image/upload/v1787000687/download.webp",
+      "https://images.pexels.com/photos/29328459/pexels-photo-29328459.jpeg",
     colors: ["#D8C7A8", "#46513D", "#B76E4A"],
   },
 
