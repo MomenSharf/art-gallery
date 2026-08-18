@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Artwork {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  year        Int
+  category    String
+  image       String
+  colors      String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([year])
+  @@index([category])
+  @@index([createdAt])
+}

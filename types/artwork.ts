@@ -2,8 +2,10 @@ export interface Artwork {
   id: string;
   title: string;
   description: string;
-  date: string;
+  year: number;
   category: string;
   image: string;
   colors: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }

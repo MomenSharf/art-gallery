@@ -2,10 +2,11 @@
 
 import { motion } from "motion/react";
 
-import { artworks } from "@/data/artworks";
 import ArtworkCard from "./artwork-card";
+import { Artwork } from "@/types/artwork";
 
-export default function Gallery() {
+export default function Gallery({ artworks }: { artworks: Artwork[] }) {
+  
   return (
     <main className="mx-auto w-full max-w-[1500px] px-5 pb-20 md:px-10 md:pb-32">
       <div className="flex flex-col">

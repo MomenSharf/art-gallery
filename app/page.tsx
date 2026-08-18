@@ -2,8 +2,14 @@ import Image from "next/image";
 
 import Gallery from "@/components/gallery/gallery";
 import GalleryHeader from "@/components/gallery/gallery-header";
+import prisma from "@/lib/prisma";
 
-export default function Home() {
+export default async function Home() {
+  const artworks = await prisma.artwork.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
   return (
     <main className="min-h-screen bg-[#f5f3ee] text-[#181816]">
       <GalleryHeader />
@@ -13,8 +19,6 @@ export default function Home() {
         <div className="mx-auto flex max-w-[1500px] flex-col gap-10 md:flex-row md:items-end md:justify-between md:gap-16">
           {/* Artist */}
           <div className="flex items-center gap-5 md:gap-7">
-     
-
             <div>
               <p className="mb-2 text-xs font-medium tracking-[0.2em] text-black/35">
                 الفنان
@@ -37,9 +41,9 @@ export default function Home() {
             </p>
 
             <p className="text-base leading-8 text-black/55 md:text-lg md:leading-9">
-              أشارك هنا مجموعة من أعمالي ورسوماتي التي تعكس اهتمامي
-              بالتفاصيل، والألوان، والتجارب البصرية. كل عمل يمثل فكرة
-              أو لحظة أو شعورًا حاولت تحويله إلى صورة.
+              أشارك هنا مجموعة من أعمالي ورسوماتي التي تعكس اهتمامي بالتفاصيل،
+              والألوان، والتجارب البصرية. كل عمل يمثل فكرة أو لحظة أو شعورًا
+              حاولت تحويله إلى صورة.
             </p>
           </div>
         </div>
@@ -53,14 +57,24 @@ export default function Home() {
           <h2 className="max-w-4xl text-5xl font-light leading-[1.15] tracking-tight md:text-7xl lg:text-8xl">
             مساحة للأفكار،
             <br />
-            <span className="text-black/35">
-              والألوان، والخيال.
-            </span>
+            <span className="text-black/35">والألوان، والخيال.</span>
           </h2>
         </div>
       </section>
 
-      <Gallery />
+     {artworks && <Gallery
+        artworks={artworks.map(
+          ({ id, title, description, year, category, image, colors }) => ({
+            id,
+            title,
+            description,
+            year,
+            category,
+            image,
+            colors,
+          }),
+        )}
+      />}
     </main>
   );
 }
