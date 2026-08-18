@@ -117,7 +117,7 @@ export default function ArtworkCard({
             </span>
 
             <span className="text-xs text-black/35">
-              {artwork.date}
+              {artwork.year}
             </span>
           </div>
 

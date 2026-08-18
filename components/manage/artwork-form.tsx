@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { motion } from "motion/react";
 import {
   ArrowRight,
@@ -21,7 +21,30 @@ interface ArtworkFormProps {
   onCancel?: () => void;
 }
 
+interface FormState {
+  title: string;
+  description: string;
+  year: string;
+  category: string;
+  image: string;
+  colors: string[];
+}
+
 const DEFAULT_COLORS = ["#D8C7A8", "#46513D", "#B76E4A"];
+const MAX_COLORS = 5;
+
+function createForm(artwork?: Artwork | null): FormState {
+  return {
+    title: artwork?.title ?? "",
+    description: artwork?.description ?? "",
+    year: artwork?.year?.toString() ?? new Date().getFullYear().toString(),
+    category: artwork?.category ?? "",
+    image: artwork?.image ?? "",
+    colors: artwork?.colors?.length
+      ? [...artwork.colors]
+      : [...DEFAULT_COLORS],
+  };
+}
 
 export default function ArtworkForm({
   artwork,
@@ -29,169 +52,154 @@ export default function ArtworkForm({
   onUpdated,
   onCancel,
 }: ArtworkFormProps) {
-  const isEditing = Boolean(artwork);
+  const editing = !!artwork;
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-const [year, setYear] = useState(
-  new Date().getFullYear().toString(),
-);  const [category, setCategory] = useState("");
-  const [image, setImage] = useState("");
-  const [colors, setColors] = useState<string[]>(DEFAULT_COLORS);
-
+  const [form, setForm] = useState(() => createForm(artwork));
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState<{
+    type: "error" | "success";
+    text: string;
+  } | null>(null);
 
-  useEffect(() => {
-    if (!artwork) {
-      setTitle("");
-      setDescription("");
-      setYear(new Date().getFullYear().toString());
-      setCategory("");
-      setImage("");
-      setColors(DEFAULT_COLORS);
-      setSuccess("");
-      setError("");
-      return;
-    }
+  function setField<K extends keyof FormState>(
+    field: K,
+    value: FormState[K],
+  ) {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
 
-    setTitle(artwork.title);
-    setDescription(artwork.description);
-    setYear(artwork.year.toString());
-    setCategory(artwork.category);
-    setImage(artwork.image);
-    setColors(artwork.colors?.length ? artwork.colors : DEFAULT_COLORS);
+    setMessage(null);
+  }
 
-    setSuccess("");
-    setError("");
-  }, [artwork]);
-
-  function updateColor(index: number, color: string) {
-    setColors((current) =>
-      current.map((item, itemIndex) => (itemIndex === index ? color : item)),
-    );
+  function setColor(index: number, color: string) {
+    setForm((current) => ({
+      ...current,
+      colors: current.colors.map((value, i) =>
+        i === index ? color : value,
+      ),
+    }));
   }
 
   function addColor() {
-    if (colors.length >= 5) return;
-
-    setColors((current) => [...current, "#C4B5A5"]);
-  }
-
-  function removeColor(index: number) {
-    if (colors.length <= 1) return;
-
-    setColors((current) =>
-      current.filter((_, itemIndex) => itemIndex !== index),
+    setForm((current) =>
+      current.colors.length >= MAX_COLORS
+        ? current
+        : {
+            ...current,
+            colors: [...current.colors, "#C4B5A5"],
+          },
     );
   }
 
-  function resetForm() {
-    setTitle("");
-    setDescription("");
-    setYear(new Date().getFullYear().toString());
-    setCategory("");
-    setImage("");
-    setColors(DEFAULT_COLORS);
+  function removeColor(index: number) {
+    setForm((current) =>
+      current.colors.length <= 1
+        ? current
+        : {
+            ...current,
+            colors: current.colors.filter((_, i) => i !== index),
+          },
+    );
   }
 
-  function isValidUrl(value: string) {
-    try {
-      const url = new URL(value);
+  function validate() {
+    const title = form.title.trim();
+    const description = form.description.trim();
+    const year = form.year.trim();
+    const category = form.category.trim();
+    const image = form.image.trim();
 
-      return url.protocol === "https:" || url.protocol === "http:";
+    if (!title) return "أدخل عنوان العمل";
+    if (!description) return "أدخل وصف العمل";
+    if (!year) return "أدخل السنة";
+    if (!category) return "أدخل التصنيف";
+    if (!image) return "أدخل رابط الصورة";
+
+    try {
+      const url = new URL(image);
+
+      if (!["http:", "https:"].includes(url.protocol)) {
+        return "أدخل رابط صورة صحيح";
+      }
     } catch {
-      return false;
+      return "أدخل رابط صورة صحيح";
     }
+
+    if (!form.colors.length) {
+      return "أضف لونًا واحدًا على الأقل";
+    }
+
+    return null;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setError("");
-    setSuccess("");
+    const validationError = validate();
 
-    const cleanTitle = title.trim();
-    const cleanDescription = description.trim();
-    const cleanDate = year.trim();
-    const cleanCategory = category.trim();
-    const cleanImage = image.trim();
-
-    if (!cleanTitle) {
-      setError("أدخل عنوان العمل");
-      return;
-    }
-
-    if (!cleanDescription) {
-      setError("أدخل وصف العمل");
-      return;
-    }
-
-    if (!cleanDate) {
-      setError("أدخل السنة");
-      return;
-    }
-
-    if (!cleanCategory) {
-      setError("أدخل التصنيف");
-      return;
-    }
-
-    if (!cleanImage) {
-      setError("أدخل رابط الصورة");
-      return;
-    }
-
-    if (!isValidUrl(cleanImage)) {
-      setError("أدخل رابط صورة صحيح يبدأ بـ https://");
-      return;
-    }
-
-    if (colors.length === 0) {
-      setError("أضف لونًا واحدًا على الأقل");
+    if (validationError) {
+      setMessage({
+        type: "error",
+        text: validationError,
+      });
       return;
     }
 
     setLoading(true);
+    setMessage(null);
 
     try {
       const response = await fetch("/api/manage/artworks", {
-        method: isEditing ? "PUT" : "POST",
+        method: editing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          action: isEditing ? "update" : "create",
+          action: editing ? "update" : "create",
           id: artwork?.id,
-          title: title.trim(),
-          description: description.trim(),
-          year: Number(year),
-          category: category.trim(),
-          image: image.trim(),
-          colors,
+          title: form.title.trim(),
+          description: form.description.trim(),
+          year: Number(form.year),
+          category: form.category.trim(),
+          image: form.image.trim(),
+          colors: form.colors,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(
-          data.error ?? (isEditing ? "تعذر تعديل العمل" : "تعذر إضافة العمل"),
+        throw new Error(
+          data.error ??
+            (editing
+              ? "تعذر تعديل العمل"
+              : "تعذر إضافة العمل"),
         );
-        return;
       }
 
-      setSuccess(isEditing ? "تم تعديل العمل بنجاح" : "تمت إضافة العمل بنجاح");
+      setMessage({
+        type: "success",
+        text: editing
+          ? "تم تعديل العمل بنجاح"
+          : "تمت إضافة العمل بنجاح",
+      });
 
-      if (isEditing) {
+      if (editing) {
         onUpdated?.();
       } else {
-        resetForm();
+        setForm(createForm());
         onCreated?.();
       }
-    } catch {
-      setError("تعذر الاتصال بالخادم");
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "تعذر الاتصال بالخادم",
+      });
     } finally {
       setLoading(false);
     }
@@ -201,52 +209,52 @@ const [year, setYear] = useState(
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8">
       <motion.form
         onSubmit={handleSubmit}
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="min-w-0 rounded-2xl border border-black/10 bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.04)] sm:p-5 md:p-7"
+        className="min-w-0 rounded-2xl border border-black/10 bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.04)] sm:p-6 md:p-7"
       >
-        <div className="mb-7 sm:mb-8">
-          {onCancel ? (
+        <header className="mb-7">
+          {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="mb-5 flex items-center gap-2 text-xs text-black/35 transition-colors hover:text-black/70"
+              className="mb-5 flex items-center gap-2 text-xs text-black/35 transition hover:text-black/70"
             >
               <ArrowRight className="size-3.5" />
               العودة إلى المكتبة
             </button>
-          ) : null}
+          )}
 
           <div className="flex items-center gap-2 text-black/30">
             <div className="flex size-8 items-center justify-center rounded-full bg-black/[0.04]">
-              {isEditing ? (
+              {editing ? (
                 <CheckCircle2 className="size-3.5" />
               ) : (
                 <Plus className="size-3.5" />
               )}
             </div>
 
-            <p className="text-xs font-medium tracking-[0.2em]">
-              {isEditing ? "تعديل العمل" : "عمل جديد"}
-            </p>
+            <span className="text-xs font-medium tracking-[0.2em]">
+              {editing ? "تعديل العمل" : "عمل جديد"}
+            </span>
           </div>
 
           <h1 className="mt-4 text-2xl font-light tracking-tight sm:text-3xl">
-            {isEditing ? "تعديل العمل الفني" : "إضافة عمل فني"}
+            {editing ? "تعديل العمل الفني" : "إضافة عمل فني"}
           </h1>
 
-          <p className="mt-2 max-w-lg text-sm leading-7 text-black/40">
-            {isEditing
+          <p className="mt-2 text-sm leading-7 text-black/40">
+            {editing
               ? "عدّل المعلومات ثم احفظ التغييرات."
               : "أدخل المعلومات الأساسية للعمل ثم أضفه إلى المعرض."}
           </p>
-        </div>
+        </header>
 
         <div className="space-y-5">
           <Field label="العنوان">
             <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              value={form.title}
+              onChange={(e) => setField("title", e.target.value)}
               placeholder="مثال: الحديقة المفقودة"
               className={inputClassName}
             />
@@ -254,19 +262,21 @@ const [year, setYear] = useState(
 
           <Field label="الوصف">
             <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              value={form.description}
+              onChange={(e) =>
+                setField("description", e.target.value)
+              }
               placeholder="اكتب وصفًا بسيطًا للعمل..."
               rows={4}
-              className={`${inputClassName} min-h-28 resize-y py-3`}
+              className={`${inputClassName} min-h-28 resize-y`}
             />
           </Field>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Field label="السنة">
               <input
-                value={year}
-                onChange={(event) => setYear(event.target.value)}
+                value={form.year}
+                onChange={(e) => setField("year", e.target.value)}
                 placeholder="2026"
                 inputMode="numeric"
                 className={inputClassName}
@@ -275,8 +285,10 @@ const [year, setYear] = useState(
 
             <Field label="التصنيف">
               <input
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
+                value={form.category}
+                onChange={(e) =>
+                  setField("category", e.target.value)
+                }
                 placeholder="رسم رقمي"
                 className={inputClassName}
               />
@@ -286,19 +298,18 @@ const [year, setYear] = useState(
           <Field label="رابط الصورة">
             <input
               type="url"
-              value={image}
-              onChange={(event) => setImage(event.target.value)}
+              value={form.image}
+              onChange={(e) => setField("image", e.target.value)}
               placeholder="https://res.cloudinary.com/..."
               dir="ltr"
               className={inputClassName}
             />
 
-            <p className="mt-2 text-xs leading-6 text-black/35">
+            <p className="mt-2 text-xs text-black/35">
               الصق رابط الصورة المباشر هنا.
             </p>
           </Field>
 
-          {/* Colors */}
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm text-black/60">
@@ -306,91 +317,94 @@ const [year, setYear] = useState(
                 ألوان العمل
               </label>
 
-              <span className="text-xs text-black/30">{colors.length}/5</span>
+              <span className="text-xs text-black/30">
+                {form.colors.length}/{MAX_COLORS}
+              </span>
             </div>
 
             <div className="rounded-xl border border-black/10 bg-[#faf9f6] p-3 sm:p-4">
               <div className="flex flex-wrap gap-2.5">
-                {colors.map((color, index) => (
+                {form.colors.map((color, index) => (
                   <div
-                    key={`${color}-${index}`}
-                    className="group flex items-center gap-2 rounded-full border border-black/10 bg-white p-1.5 pr-2 shadow-sm"
+                    key={index}
+                    className="flex items-center gap-2 rounded-full border border-black/10 bg-white p-1.5 pr-2 shadow-sm"
                   >
                     <label
-                      className="relative block size-9 cursor-pointer overflow-hidden rounded-full"
-                      style={{
-                        backgroundColor: color,
-                      }}
+                      className="relative size-9 cursor-pointer overflow-hidden rounded-full"
+                      style={{ backgroundColor: color }}
                     >
                       <input
                         type="color"
                         value={color}
-                        onChange={(event) =>
-                          updateColor(index, event.target.value)
+                        onChange={(e) =>
+                          setColor(index, e.target.value)
                         }
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        className="absolute inset-0 size-full cursor-pointer opacity-0"
                       />
                     </label>
 
-                    <span className="pr-1 text-[10px] uppercase tracking-wide text-black/40">
+                    <span className="pr-1 text-[10px] uppercase text-black/40">
                       {color}
                     </span>
 
-                    {colors.length > 1 ? (
+                    {form.colors.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeColor(index)}
-                        className="flex size-6 items-center justify-center rounded-full text-black/25 transition-colors hover:bg-black/5 hover:text-black/60"
+                        className="flex size-6 items-center justify-center rounded-full text-black/25 transition hover:bg-black/5 hover:text-black/60"
                       >
                         <X className="size-3" />
                       </button>
-                    ) : null}
+                    )}
                   </div>
                 ))}
 
-                {colors.length < 5 ? (
+                {form.colors.length < MAX_COLORS && (
                   <button
                     type="button"
                     onClick={addColor}
-                    className="flex h-12 items-center gap-2 rounded-full border border-dashed border-black/15 px-4 text-xs text-black/40 transition-colors hover:border-black/30 hover:text-black/70"
+                    className="flex h-12 items-center gap-2 rounded-full border border-dashed border-black/15 px-4 text-xs text-black/40 transition hover:border-black/30 hover:text-black/70"
                   >
                     <Plus className="size-3.5" />
                     إضافة لون
                   </button>
-                ) : null}
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {error ? (
-          <div className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm leading-6 text-red-600">
-            {error}
-          </div>
-        ) : null}
+        {message && (
+          <div
+            className={`mt-5 flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
+              message.type === "error"
+                ? "bg-red-50 text-red-600"
+                : "bg-emerald-50 text-emerald-700"
+            }`}
+          >
+            {message.type === "success" && (
+              <CheckCircle2 className="size-4 shrink-0" />
+            )}
 
-        {success ? (
-          <div className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-700">
-            <CheckCircle2 className="size-4 shrink-0" />
-            {success}
+            {message.text}
           </div>
-        ) : null}
+        )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          {onCancel ? (
+          {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="order-2 h-12 rounded-xl border border-black/10 px-5 text-sm text-black/50 transition-colors hover:bg-black/[0.03] sm:order-1"
+              className="h-12 rounded-xl border border-black/10 px-5 text-sm text-black/50 transition hover:bg-black/[0.03]"
             >
               إلغاء
             </button>
-          ) : null}
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="order-1 flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#181816] px-4 text-sm text-white transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 sm:order-2"
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#181816] px-4 text-sm text-white transition hover:-translate-y-0.5 hover:shadow-lg disabled:pointer-events-none disabled:opacity-50"
           >
             {loading ? (
               <>
@@ -399,80 +413,89 @@ const [year, setYear] = useState(
               </>
             ) : (
               <>
-                {isEditing ? (
+                {editing ? (
                   <CheckCircle2 className="size-4" />
                 ) : (
                   <Plus className="size-4" />
                 )}
-                {isEditing ? "حفظ التعديلات" : "إضافة العمل"}
+
+                {editing ? "حفظ التعديلات" : "إضافة العمل"}
               </>
             )}
           </button>
         </div>
       </motion.form>
 
-      {/* Preview */}
-      <motion.aside
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="min-w-0 lg:sticky lg:top-8 lg:self-start"
-      >
-        <p className="mb-3 text-xs font-medium tracking-[0.2em] text-black/30">
-          معاينة
-        </p>
+      <Preview form={form} />
+    </div>
+  );
+}
 
-        <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
-          <div className="relative aspect-[4/3] bg-[#eeece7]">
-            {image ? (
-              <img
-                src={image}
-                alt={title || "معاينة العمل"}
-                className="absolute inset-0 h-full w-full object-cover"
-                onError={(event) => {
-                  event.currentTarget.style.display = "none";
-                }}
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center text-black/25">
-                  <ImagePlus className="mx-auto mb-3 size-7" />
+function Preview({ form }: { form: FormState }) {
+  return (
+    <motion.aside
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-w-0 lg:sticky lg:top-8 lg:self-start"
+    >
+      <p className="mb-3 text-xs font-medium tracking-[0.2em] text-black/30">
+        معاينة
+      </p>
 
-                  <p className="text-xs">الصق رابط الصورة لرؤية المعاينة</p>
-                </div>
+      <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+        <div className="relative aspect-[4/3] bg-[#eeece7]">
+          {form.image ? (
+            <img
+              src={form.image}
+              alt={form.title || "معاينة العمل"}
+              className="absolute inset-0 size-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center text-black/25">
+                <ImagePlus className="mx-auto mb-3 size-7" />
+                <p className="text-xs">
+                  الصق رابط الصورة لرؤية المعاينة
+                </p>
               </div>
-            )}
+            </div>
+          )}
+        </div>
+
+        <div className="p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-black/40">
+              {form.category || "التصنيف"}
+            </span>
+
+            <span className="text-xs text-black/30">
+              {form.year || "2026"}
+            </span>
           </div>
 
-          <div className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-black/40">
-                {category || "التصنيف"}
-              </span>
+          <h2 className="mt-4 text-2xl font-light">
+            {form.title || "عنوان العمل"}
+          </h2>
 
-              <span className="text-xs text-black/30">{year || "2026"}</span>
-            </div>
+          <p className="mt-3 text-sm leading-7 text-black/45">
+            {form.description || "سيظهر وصف العمل هنا."}
+          </p>
 
-            <h2 className="mt-4 text-2xl font-light">
-              {title || "عنوان العمل"}
-            </h2>
-
-            <p className="mt-3 text-sm leading-7 text-black/45">
-              {description || "سيظهر وصف العمل هنا."}
-            </p>
-
-            <div className="mt-5 flex gap-1.5">
-              {colors.map((color, index) => (
-                <span
-                  key={`${color}-${index}`}
-                  className="size-5 rounded-full border border-black/10"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
+          <div className="mt-5 flex gap-1.5">
+            {form.colors.map((color, index) => (
+              <span
+                key={index}
+                className="size-5 rounded-full border border-black/10"
+                style={{ backgroundColor: color }}
+              />
+            ))}
           </div>
         </div>
-      </motion.aside>
-    </div>
+      </div>
+    </motion.aside>
   );
 }
 
@@ -485,7 +508,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm text-black/60">{label}</label>
+      <label className="mb-2 block text-sm text-black/60">
+        {label}
+      </label>
 
       {children}
     </div>
