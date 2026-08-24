@@ -1,7 +1,6 @@
-import Image from "next/image";
-
 import Gallery from "@/components/gallery/gallery";
 import GalleryHeader from "@/components/gallery/gallery-header";
+
 import prisma from "@/lib/prisma";
 
 export default async function Home() {
@@ -10,8 +9,12 @@ export default async function Home() {
       createdAt: "desc",
     },
   });
+
   return (
-    <main className="min-h-screen bg-[#f5f3ee] text-[#181816]">
+    <main
+      dir="rtl"
+      className="min-h-screen bg-[#f5f3ee] text-[#181816]"
+    >
       <GalleryHeader />
 
       {/* Artist introduction */}
@@ -35,7 +38,7 @@ export default async function Home() {
           </div>
 
           {/* Description */}
-          <div className="max-w-xl md:text-left">
+          <div className="max-w-xl">
             <p className="mb-4 text-xs font-medium tracking-[0.25em] text-black/30">
               نبذة
             </p>
@@ -57,14 +60,24 @@ export default async function Home() {
           <h2 className="max-w-4xl text-5xl font-light leading-[1.15] tracking-tight md:text-7xl lg:text-8xl">
             مساحة للأفكار،
             <br />
-            <span className="text-black/35">والألوان، والخيال.</span>
+            <span className="text-black/35">
+              والألوان، والخيال.
+            </span>
           </h2>
         </div>
       </section>
 
-     {artworks && <Gallery
+      <Gallery
         artworks={artworks.map(
-          ({ id, title, description, year, category, image, colors }) => ({
+          ({
+            id,
+            title,
+            description,
+            year,
+            category,
+            image,
+            colors,
+          }) => ({
             id,
             title,
             description,
@@ -74,7 +87,7 @@ export default async function Home() {
             colors,
           }),
         )}
-      />}
+      />
     </main>
   );
 }

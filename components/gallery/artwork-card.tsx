@@ -52,40 +52,36 @@ export default function ArtworkCard({
             duration: 1.1,
             ease: [0.22, 1, 0.36, 1],
           }}
-          className="relative w-full overflow-hidden rounded-[2px] bg-black/5 md:w-[62%]"
+          className="w-full md:w-[62%]"
         >
-          <div className="relative aspect-[4/3] w-full">
+          <div className="relative overflow-hidden rounded-[4px] bg-black/[0.03] p-2 sm:p-3">
             <motion.div
-              className="absolute inset-0"
               whileHover={{
-                scale: 1.025,
+                scale: 1.015,
               }}
               transition={{
                 duration: 0.8,
                 ease: [0.22, 1, 0.36, 1],
               }}
+              className="relative overflow-hidden rounded-[2px]"
             >
               <Image
                 src={artwork.image}
                 alt={artwork.title}
-                fill
+                width={1600}
+                height={1200}
                 sizes="(max-width: 768px) 100vw, 62vw"
-                className="object-cover"
+                className="block h-auto w-full object-contain"
               />
+
+              {/* Subtle hover overlay */}
+              <div className="pointer-events-none absolute inset-0 bg-black/[0.03] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+              {/* Artwork number */}
+              <div className="absolute left-4 top-4 flex size-9 items-center justify-center rounded-full bg-white/85 text-[10px] font-medium text-black/60 shadow-sm backdrop-blur-md">
+                {String(index + 1).padStart(2, "0")}
+              </div>
             </motion.div>
-
-            {/* Subtle hover overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileHover={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
-              className="pointer-events-none absolute inset-0 bg-black/[0.04]"
-            />
-
-            {/* Artwork number */}
-            <div className="absolute left-5 top-5 flex size-9 items-center justify-center rounded-full bg-white/80 text-[10px] font-medium text-black/60 backdrop-blur-md">
-              {String(index + 1).padStart(2, "0")}
-            </div>
           </div>
         </motion.div>
 
@@ -137,12 +133,17 @@ export default function ArtworkCard({
               الألوان
             </span>
 
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {artwork.colors.map((color) => (
                 <motion.span
                   key={color}
                   whileHover={{
                     scale: 1.25,
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 15,
                   }}
                   className="size-4 rounded-full border border-black/10"
                   style={{
