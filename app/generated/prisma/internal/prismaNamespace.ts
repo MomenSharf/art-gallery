@@ -397,6 +397,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
+  ArtistProfile: 'ArtistProfile',
   Artwork: 'Artwork'
 } as const
 
@@ -413,10 +414,84 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "artwork"
+    modelProps: "artistProfile" | "artwork"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
+    ArtistProfile: {
+      payload: Prisma.$ArtistProfilePayload<ExtArgs>
+      fields: Prisma.ArtistProfileFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ArtistProfileFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ArtistProfileFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>
+        }
+        findFirst: {
+          args: Prisma.ArtistProfileFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ArtistProfileFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>
+        }
+        findMany: {
+          args: Prisma.ArtistProfileFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>[]
+        }
+        create: {
+          args: Prisma.ArtistProfileCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>
+        }
+        createMany: {
+          args: Prisma.ArtistProfileCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ArtistProfileCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>[]
+        }
+        delete: {
+          args: Prisma.ArtistProfileDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>
+        }
+        update: {
+          args: Prisma.ArtistProfileUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>
+        }
+        deleteMany: {
+          args: Prisma.ArtistProfileDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ArtistProfileUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ArtistProfileUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>[]
+        }
+        upsert: {
+          args: Prisma.ArtistProfileUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ArtistProfilePayload>
+        }
+        aggregate: {
+          args: Prisma.ArtistProfileAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateArtistProfile>
+        }
+        groupBy: {
+          args: Prisma.ArtistProfileGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ArtistProfileGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ArtistProfileCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ArtistProfileCountAggregateOutputType> | number
+        }
+      }
+    }
     Artwork: {
       payload: Prisma.$ArtworkPayload<ExtArgs>
       fields: Prisma.ArtworkFieldRefs
@@ -530,6 +605,30 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const ArtistProfileScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  bio: 'bio',
+  phone: 'phone',
+  email: 'email',
+  location: 'location',
+  avatar: 'avatar',
+  website: 'website',
+  instagram: 'instagram',
+  facebook: 'facebook',
+  x: 'x',
+  behance: 'behance',
+  dribbble: 'dribbble',
+  artStyle: 'artStyle',
+  specialty: 'specialty',
+  availableForWork: 'availableForWork',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ArtistProfileScalarFieldEnum = (typeof ArtistProfileScalarFieldEnum)[keyof typeof ArtistProfileScalarFieldEnum]
+
+
 export const ArtworkScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -561,6 +660,14 @@ export const QueryMode = {
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
 
 /**
  * Field references
@@ -582,16 +689,9 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Boolean'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -606,6 +706,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -773,6 +887,7 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
  */
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
+  artistProfile?: Prisma.ArtistProfileOmit
   artwork?: Prisma.ArtworkOmit
 }
 

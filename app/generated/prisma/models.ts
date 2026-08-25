@@ -8,5 +8,6 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/ArtistProfile'
 export type * from './models/Artwork'
 export type * from './commonInputTypes'

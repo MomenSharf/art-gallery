@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import {
   ArrowRight,
@@ -13,12 +14,12 @@ import {
 } from "lucide-react";
 
 import type { Artwork } from "@/types/artwork";
+import { updateArtwork } from "@/lib/actions/update-artwork";
+import { createArtwork } from "@/lib/actions/create-artwork";
+
 
 interface ArtworkFormProps {
   artwork?: Artwork | null;
-  onCreated?: () => void;
-  onUpdated?: () => void;
-  onCancel?: () => void;
 }
 
 interface FormState {
@@ -30,14 +31,21 @@ interface FormState {
   colors: string[];
 }
 
-const DEFAULT_COLORS = ["#D8C7A8", "#46513D", "#B76E4A"];
+const DEFAULT_COLORS = [
+  "#D8C7A8",
+  "#46513D",
+  "#B76E4A",
+];
+
 const MAX_COLORS = 5;
 
 function createForm(artwork?: Artwork | null): FormState {
   return {
     title: artwork?.title ?? "",
     description: artwork?.description ?? "",
-    year: artwork?.year?.toString() ?? new Date().getFullYear().toString(),
+    year:
+      artwork?.year?.toString() ??
+      new Date().getFullYear().toString(),
     category: artwork?.category ?? "",
     image: artwork?.image ?? "",
     colors: artwork?.colors?.length
@@ -48,14 +56,17 @@ function createForm(artwork?: Artwork | null): FormState {
 
 export default function ArtworkForm({
   artwork,
-  onCreated,
-  onUpdated,
-  onCancel,
 }: ArtworkFormProps) {
-  const editing = !!artwork;
+  const router = useRouter();
 
-  const [form, setForm] = useState(() => createForm(artwork));
+  const editing = Boolean(artwork);
+
+  const [form, setForm] = useState<FormState>(() =>
+    createForm(artwork)
+  );
+
   const [loading, setLoading] = useState(false);
+
   const [message, setMessage] = useState<{
     type: "error" | "success";
     text: string;
@@ -63,7 +74,7 @@ export default function ArtworkForm({
 
   function setField<K extends keyof FormState>(
     field: K,
-    value: FormState[K],
+    value: FormState[K]
   ) {
     setForm((current) => ({
       ...current,
@@ -77,50 +88,88 @@ export default function ArtworkForm({
     setForm((current) => ({
       ...current,
       colors: current.colors.map((value, i) =>
-        i === index ? color : value,
+        i === index ? color : value
       ),
     }));
+
+    setMessage(null);
   }
 
   function addColor() {
-    setForm((current) =>
-      current.colors.length >= MAX_COLORS
-        ? current
-        : {
-            ...current,
-            colors: [...current.colors, "#C4B5A5"],
-          },
-    );
+    setForm((current) => {
+      if (current.colors.length >= MAX_COLORS) {
+        return current;
+      }
+
+      return {
+        ...current,
+        colors: [
+          ...current.colors,
+          "#C4B5A5",
+        ],
+      };
+    });
   }
 
   function removeColor(index: number) {
-    setForm((current) =>
-      current.colors.length <= 1
-        ? current
-        : {
-            ...current,
-            colors: current.colors.filter((_, i) => i !== index),
-          },
-    );
+    setForm((current) => {
+      if (current.colors.length <= 1) {
+        return current;
+      }
+
+      return {
+        ...current,
+        colors: current.colors.filter(
+          (_, i) => i !== index
+        ),
+      };
+    });
   }
 
   function validate() {
     const title = form.title.trim();
     const description = form.description.trim();
-    const year = form.year.trim();
     const category = form.category.trim();
     const image = form.image.trim();
 
-    if (!title) return "أدخل عنوان العمل";
-    if (!description) return "أدخل وصف العمل";
-    if (!year) return "أدخل السنة";
-    if (!category) return "أدخل التصنيف";
-    if (!image) return "أدخل رابط الصورة";
+    if (!title) {
+      return "أدخل عنوان العمل";
+    }
+
+    if (!description) {
+      return "أدخل وصف العمل";
+    }
+
+    if (!form.year.trim()) {
+      return "أدخل السنة";
+    }
+
+    const year = Number(form.year);
+
+    if (
+      !Number.isInteger(year) ||
+      year < 1900 ||
+      year > new Date().getFullYear() + 1
+    ) {
+      return "أدخل سنة صحيحة";
+    }
+
+    if (!category) {
+      return "أدخل التصنيف";
+    }
+
+    if (!image) {
+      return "أدخل رابط الصورة";
+    }
 
     try {
       const url = new URL(image);
 
-      if (!["http:", "https:"].includes(url.protocol)) {
+      if (
+        !["http:", "https:"].includes(
+          url.protocol
+        )
+      ) {
         return "أدخل رابط صورة صحيح";
       }
     } catch {
@@ -134,7 +183,9 @@ export default function ArtworkForm({
     return null;
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     const validationError = validate();
@@ -144,61 +195,48 @@ export default function ArtworkForm({
         type: "error",
         text: validationError,
       });
+
       return;
     }
 
     setLoading(true);
     setMessage(null);
 
+    const payload = {
+      title: form.title.trim(),
+      description: form.description.trim(),
+      year: Number(form.year),
+      category: form.category.trim(),
+      image: form.image.trim(),
+      colors: form.colors,
+    };
+
     try {
-      const response = await fetch("/api/manage/artworks", {
-        method: editing ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: editing ? "update" : "create",
-          id: artwork?.id,
-          title: form.title.trim(),
-          description: form.description.trim(),
-          year: Number(form.year),
-          category: form.category.trim(),
-          image: form.image.trim(),
-          colors: form.colors,
-        }),
-      });
+      if (editing && artwork) {
+        await updateArtwork({
+          id: artwork.id,
+          ...payload,
+        });
 
-      const data = await response.json();
+        router.push("/manage/library");
+        router.refresh();
 
-      if (!response.ok) {
-        throw new Error(
-          data.error ??
-            (editing
-              ? "تعذر تعديل العمل"
-              : "تعذر إضافة العمل"),
-        );
+        return;
       }
 
-      setMessage({
-        type: "success",
-        text: editing
-          ? "تم تعديل العمل بنجاح"
-          : "تمت إضافة العمل بنجاح",
-      });
+      await createArtwork(payload);
 
-      if (editing) {
-        onUpdated?.();
-      } else {
-        setForm(createForm());
-        onCreated?.();
-      }
+      router.push("/manage/library");
+      router.refresh();
     } catch (error) {
       setMessage({
         type: "error",
         text:
           error instanceof Error
             ? error.message
-            : "تعذر الاتصال بالخادم",
+            : editing
+              ? "تعذر تعديل العمل"
+              : "تعذر إضافة العمل",
       });
     } finally {
       setLoading(false);
@@ -206,24 +244,28 @@ export default function ArtworkForm({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-8 p-3">
       <motion.form
         onSubmit={handleSubmit}
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{
+          opacity: 0,
+          y: 16,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
         className="min-w-0 rounded-2xl border border-black/10 bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.04)] sm:p-6 md:p-7"
       >
         <header className="mb-7">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="mb-5 flex items-center gap-2 text-xs text-black/35 transition hover:text-black/70"
-            >
-              <ArrowRight className="size-3.5" />
-              العودة إلى المكتبة
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => router.push("/manage/library")}
+            className="mb-5 flex items-center gap-2 text-xs text-black/35 transition hover:text-black/70"
+          >
+            <ArrowRight className="size-3.5" />
+            العودة إلى المكتبة
+          </button>
 
           <div className="flex items-center gap-2 text-black/30">
             <div className="flex size-8 items-center justify-center rounded-full bg-black/[0.04]">
@@ -235,12 +277,16 @@ export default function ArtworkForm({
             </div>
 
             <span className="text-xs font-medium tracking-[0.2em]">
-              {editing ? "تعديل العمل" : "عمل جديد"}
+              {editing
+                ? "تعديل العمل"
+                : "عمل جديد"}
             </span>
           </div>
 
           <h1 className="mt-4 text-2xl font-light tracking-tight sm:text-3xl">
-            {editing ? "تعديل العمل الفني" : "إضافة عمل فني"}
+            {editing
+              ? "تعديل العمل الفني"
+              : "إضافة عمل فني"}
           </h1>
 
           <p className="mt-2 text-sm leading-7 text-black/40">
@@ -254,7 +300,9 @@ export default function ArtworkForm({
           <Field label="العنوان">
             <input
               value={form.title}
-              onChange={(e) => setField("title", e.target.value)}
+              onChange={(e) =>
+                setField("title", e.target.value)
+              }
               placeholder="مثال: الحديقة المفقودة"
               className={inputClassName}
             />
@@ -264,7 +312,10 @@ export default function ArtworkForm({
             <textarea
               value={form.description}
               onChange={(e) =>
-                setField("description", e.target.value)
+                setField(
+                  "description",
+                  e.target.value
+                )
               }
               placeholder="اكتب وصفًا بسيطًا للعمل..."
               rows={4}
@@ -276,7 +327,9 @@ export default function ArtworkForm({
             <Field label="السنة">
               <input
                 value={form.year}
-                onChange={(e) => setField("year", e.target.value)}
+                onChange={(e) =>
+                  setField("year", e.target.value)
+                }
                 placeholder="2026"
                 inputMode="numeric"
                 className={inputClassName}
@@ -287,7 +340,10 @@ export default function ArtworkForm({
               <input
                 value={form.category}
                 onChange={(e) =>
-                  setField("category", e.target.value)
+                  setField(
+                    "category",
+                    e.target.value
+                  )
                 }
                 placeholder="رسم رقمي"
                 className={inputClassName}
@@ -299,7 +355,9 @@ export default function ArtworkForm({
             <input
               type="url"
               value={form.image}
-              onChange={(e) => setField("image", e.target.value)}
+              onChange={(e) =>
+                setField("image", e.target.value)
+              }
               placeholder="https://res.cloudinary.com/..."
               dir="ltr"
               className={inputClassName}
@@ -331,13 +389,18 @@ export default function ArtworkForm({
                   >
                     <label
                       className="relative size-9 cursor-pointer overflow-hidden rounded-full"
-                      style={{ backgroundColor: color }}
+                      style={{
+                        backgroundColor: color,
+                      }}
                     >
                       <input
                         type="color"
                         value={color}
                         onChange={(e) =>
-                          setColor(index, e.target.value)
+                          setColor(
+                            index,
+                            e.target.value
+                          )
                         }
                         className="absolute inset-0 size-full cursor-pointer opacity-0"
                       />
@@ -350,7 +413,9 @@ export default function ArtworkForm({
                     {form.colors.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => removeColor(index)}
+                        onClick={() =>
+                          removeColor(index)
+                        }
                         className="flex size-6 items-center justify-center rounded-full text-black/25 transition hover:bg-black/5 hover:text-black/60"
                       >
                         <X className="size-3" />
@@ -359,7 +424,8 @@ export default function ArtworkForm({
                   </div>
                 ))}
 
-                {form.colors.length < MAX_COLORS && (
+                {form.colors.length <
+                  MAX_COLORS && (
                   <button
                     type="button"
                     onClick={addColor}
@@ -391,15 +457,16 @@ export default function ArtworkForm({
         )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="h-12 rounded-xl border border-black/10 px-5 text-sm text-black/50 transition hover:bg-black/[0.03]"
-            >
-              إلغاء
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() =>
+              router.push("/manage/library")
+            }
+            disabled={loading}
+            className="h-12 rounded-xl border border-black/10 px-5 text-sm text-black/50 transition hover:bg-black/[0.03] disabled:opacity-50"
+          >
+            إلغاء
+          </button>
 
           <button
             type="submit"
@@ -419,7 +486,9 @@ export default function ArtworkForm({
                   <Plus className="size-4" />
                 )}
 
-                {editing ? "حفظ التعديلات" : "إضافة العمل"}
+                {editing
+                  ? "حفظ التعديلات"
+                  : "إضافة العمل"}
               </>
             )}
           </button>
@@ -431,12 +500,22 @@ export default function ArtworkForm({
   );
 }
 
-function Preview({ form }: { form: FormState }) {
+function Preview({
+  form,
+}: {
+  form: FormState;
+}) {
   return (
     <motion.aside
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="min-w-0 lg:sticky lg:top-8 lg:self-start"
+      initial={{
+        opacity: 0,
+        y: 16,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      className="min-w-0 lg:sticky lg:top-24 lg:self-start"
     >
       <p className="mb-3 text-xs font-medium tracking-[0.2em] text-black/30">
         معاينة
@@ -450,13 +529,15 @@ function Preview({ form }: { form: FormState }) {
               alt={form.title || "معاينة العمل"}
               className="absolute inset-0 size-full object-cover"
               onError={(e) => {
-                e.currentTarget.style.display = "none";
+                e.currentTarget.style.display =
+                  "none";
               }}
             />
           ) : (
             <div className="flex h-full items-center justify-center">
               <div className="text-center text-black/25">
                 <ImagePlus className="mx-auto mb-3 size-7" />
+
                 <p className="text-xs">
                   الصق رابط الصورة لرؤية المعاينة
                 </p>
@@ -481,7 +562,8 @@ function Preview({ form }: { form: FormState }) {
           </h2>
 
           <p className="mt-3 text-sm leading-7 text-black/45">
-            {form.description || "سيظهر وصف العمل هنا."}
+            {form.description ||
+              "سيظهر وصف العمل هنا."}
           </p>
 
           <div className="mt-5 flex gap-1.5">
@@ -489,7 +571,9 @@ function Preview({ form }: { form: FormState }) {
               <span
                 key={index}
                 className="size-5 rounded-full border border-black/10"
-                style={{ backgroundColor: color }}
+                style={{
+                  backgroundColor: color,
+                }}
               />
             ))}
           </div>

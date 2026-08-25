@@ -15,7 +15,7 @@ const navigation = [
   { label: "الأعمال", href: "#artworks" },
   { label: "عن الفنان", href: "#about" },
   { label: "تواصل", href: "#contact" },
-  { label: "إدارة", href: "/manage" },
+  { label: "إدارة", href: "/manage/login" },
 ];
 
 export default function GalleryHeader() {

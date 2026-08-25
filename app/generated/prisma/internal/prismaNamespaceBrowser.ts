@@ -51,6 +51,7 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
+  ArtistProfile: 'ArtistProfile',
   Artwork: 'Artwork'
 } as const
 
@@ -68,6 +69,30 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 } as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const ArtistProfileScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  bio: 'bio',
+  phone: 'phone',
+  email: 'email',
+  location: 'location',
+  avatar: 'avatar',
+  website: 'website',
+  instagram: 'instagram',
+  facebook: 'facebook',
+  x: 'x',
+  behance: 'behance',
+  dribbble: 'dribbble',
+  artStyle: 'artStyle',
+  specialty: 'specialty',
+  availableForWork: 'availableForWork',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ArtistProfileScalarFieldEnum = (typeof ArtistProfileScalarFieldEnum)[keyof typeof ArtistProfileScalarFieldEnum]
 
 
 export const ArtworkScalarFieldEnum = {
@@ -99,4 +124,12 @@ export const QueryMode = {
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

@@ -6,6 +6,6 @@ export interface Artwork {
   category: string;
   image: string;
   colors: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

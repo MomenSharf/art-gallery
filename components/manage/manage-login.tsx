@@ -1,20 +1,28 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { Eye, EyeOff, LockKeyhole, ArrowLeft } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  ArrowLeft,
+} from "lucide-react";
+import { loginManage } from "@/lib/actions/login";
 
-interface ManageLoginProps {
-  onSuccess: () => void;
-}
 
-export default function ManageLogin({ onSuccess }: ManageLoginProps) {
+export default function ManageLogin() {
+  const router = useRouter();
+
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     if (!password.trim()) {
@@ -26,27 +34,17 @@ export default function ManageLogin({ onSuccess }: ManageLoginProps) {
     setError("");
 
     try {
-      const response = await fetch("/api/manage/artworks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "login",
-          password,
-        }),
-      });
+      const result = await loginManage(password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error ?? "حدث خطأ ما");
+      if (!result.success) {
+        setError(result.error ?? "حدث خطأ ما");
         return;
       }
 
-      onSuccess();
+      router.replace("/manage/library");
+      router.refresh();
     } catch {
-      setError("تعذر الاتصال بالخادم");
+      setError("حدث خطأ ما");
     } finally {
       setLoading(false);
     }
@@ -89,18 +87,26 @@ export default function ManageLogin({ onSuccess }: ManageLoginProps) {
             <input
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
               placeholder="••••••••"
               autoComplete="current-password"
-              className="h-12 w-full rounded-xl border border-black/10 bg-[#faf9f6] px-4 pl-12 text-sm outline-none transition-colors placeholder:text-black/20 focus:border-black/30"
+              disabled={loading}
+              className="h-12 w-full rounded-xl border border-black/10 bg-[#faf9f6] px-4 pl-12 text-sm outline-none transition-colors placeholder:text-black/20 focus:border-black/30 disabled:opacity-60"
             />
 
             <button
               type="button"
-              onClick={() => setShowPassword((value) => !value)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-black/35 transition-colors hover:text-black/70"
+              onClick={() =>
+                setShowPassword((value) => !value)
+              }
+              disabled={loading}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-black/35 transition-colors hover:text-black/70 disabled:opacity-50"
               aria-label={
-                showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
+                showPassword
+                  ? "إخفاء كلمة المرور"
+                  : "إظهار كلمة المرور"
               }
             >
               {showPassword ? (
@@ -111,17 +117,24 @@ export default function ManageLogin({ onSuccess }: ManageLoginProps) {
             </button>
           </div>
 
-          {error ? (
-            <p className="mt-3 text-sm text-red-600">{error}</p>
-          ) : null}
+          {error && (
+            <p className="mt-3 text-sm text-red-600">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#181816] text-sm text-white transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#181816] text-sm text-white transition-all hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <span>{loading ? "جاري الدخول..." : "دخول"}</span>
-            {!loading ? <ArrowLeft className="size-4" /> : null}
+            <span>
+              {loading ? "جاري الدخول..." : "دخول"}
+            </span>
+
+            {!loading && (
+              <ArrowLeft className="size-4" />
+            )}
           </button>
         </form>
       </motion.div>
