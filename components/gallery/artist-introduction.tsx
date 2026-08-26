@@ -8,7 +8,6 @@ import {
   Phone,
 } from "lucide-react";
 
-
 interface ArtistIntroductionProps {
   profile: ArtistProfile | null;
 }
@@ -17,9 +16,7 @@ export default function ArtistIntroduction({
   profile,
 }: ArtistIntroductionProps) {
   const name = profile?.name || "اسم الفنان";
-  const bio =
-    profile?.bio ||
-    "مساحة لمشاركة الأعمال الفنية والتجارب البصرية.";
+  const bio = profile?.bio || "مساحة لمشاركة الأعمال الفنية والتجارب البصرية.";
 
   const socialLinks = [
     {
@@ -32,9 +29,8 @@ export default function ArtistIntroduction({
       label: "الموقع",
       icon: Globe,
     },
-  ].filter(
-    (item): item is typeof item & { href: string } =>
-      Boolean(item.href),
+  ].filter((item): item is typeof item & { href: string } =>
+    Boolean(item.href),
   );
 
   return (
@@ -83,8 +79,7 @@ export default function ArtistIntroduction({
                 {(profile?.artStyle || profile?.specialty) && (
                   <p className="mt-3 text-sm text-black/40 md:text-base">
                     {profile.artStyle || profile.specialty}
-                    {profile.artStyle &&
-                    profile.specialty
+                    {profile.artStyle && profile.specialty
                       ? ` · ${profile.specialty}`
                       : null}
                   </p>
@@ -125,22 +120,13 @@ export default function ArtistIntroduction({
         {/* Details */}
         <div className="mt-16 grid border-y border-black/[0.08] md:mt-24 md:grid-cols-3">
           {/* Specialty */}
-          <InfoItem
-            label="التخصص"
-            value={profile?.specialty}
-          />
+          <InfoItem label="التخصص" value={profile?.specialty} />
 
           {/* Art style */}
-          <InfoItem
-            label="الأسلوب الفني"
-            value={profile?.artStyle}
-          />
+          <InfoItem label="المجال" value={profile?.artStyle} />
 
           {/* Location */}
-          <InfoItem
-            label="الموقع"
-            value={profile?.location}
-          />
+          <InfoItem label="الموقع" value={profile?.location} />
         </div>
 
         {/* Contact + Social */}
@@ -200,11 +186,9 @@ export default function ArtistIntroduction({
 
           <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
             <h2 className="max-w-5xl text-5xl font-light leading-[1.08] tracking-tight md:text-7xl lg:text-[7.5rem]">
-              مساحة للأفكار،
+              مساحة للإبداع،
               <br />
-              <span className="text-black/25">
-                والألوان، والخيال.
-              </span>
+              <span className="text-black/25">والتعلّم، والألوان.</span>
             </h2>
 
             <div className="flex shrink-0 items-center gap-3 text-xs text-black/35">
@@ -218,22 +202,14 @@ export default function ArtistIntroduction({
   );
 }
 
-function InfoItem({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string | null;
-}) {
+function InfoItem({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className="border-b border-black/[0.08] py-6 first:pt-6 md:border-b-0 md:border-l md:px-8 md:py-8 md:first:pr-0 md:last:border-l-0">
       <p className="text-[10px] font-medium tracking-[0.22em] text-black/25">
         {label}
       </p>
 
-      <p className="mt-3 text-sm text-black/55">
-        {value || "—"}
-      </p>
+      <p className="mt-3 text-sm text-black/55">{value || "—"}</p>
     </div>
   );
 }
